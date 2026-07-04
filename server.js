@@ -44,6 +44,23 @@ app.get('/generate-pdf', async (req, res) => {
         // Extra settle time for Arabic font shaping
         await new Promise(r => setTimeout(r, 800));
 
+        // Strip all outer spacing so content fills the A4 page edge-to-edge
+        await page.addStyleTag({ content: `
+            html, body {
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #ffffff !important;
+            }
+            main {
+                margin: 0 !important;
+                max-width: 100% !important;
+                width: 100% !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+            }
+            #print-btn-wrapper { display: none !important; }
+        ` });
+
         // Generate A4 PDF
         const pdfBuffer = await page.pdf({
             format: 'A4',
