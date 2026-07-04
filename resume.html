@@ -345,6 +345,13 @@
 </div>
 </div>
 </main>
+<div class="flex justify-center py-8">
+    <button id="downloadPdf" class="flex items-center gap-2 bg-primary text-on-primary px-6 py-3 rounded-lg hover:bg-primary-container transition-colors text-lg font-semibold">
+        <span class="material-symbols-outlined">download</span>
+        تحميل السيرة الذاتية كملف PDF
+    </button>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
         // Default resume data
         const defaultResumeData = {
@@ -498,6 +505,19 @@
             card.addEventListener('mouseleave', () => {
                 card.style.transform = 'translateY(0)';
             });
+        });
+
+        // Download PDF
+        document.getElementById('downloadPdf').addEventListener('click', () => {
+            const element = document.querySelector('main');
+            const opt = {
+                margin: 10,
+                filename: 'عبدالله_محجوب_سيرة_ذاتية.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(element).save();
         });
     </script>
 
