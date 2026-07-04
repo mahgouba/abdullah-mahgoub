@@ -558,30 +558,42 @@
             });
         });
 
-        // Download PDF — waits for all web fonts (Arabic) to fully load
-        // before html2canvas captures the page, preventing disconnected letters.
+        // Download PDF — direct file download, A4 full-size, Arabic-safe.
         document.getElementById('downloadPdf').addEventListener('click', async () => {
             const btn = document.getElementById('downloadPdf');
             btn.disabled = true;
-            btn.innerHTML = '<span class="material-symbols-outlined animate-spin">progress_activity</span> جارٍ التحضير...';
+            btn.innerHTML = '<span class="material-symbols-outlined">progress_activity</span> جارٍ التحضير...';
 
             try {
-                // Wait for all fonts including IBM Plex Sans Arabic
+                // Wait for IBM Plex Sans Arabic and all other fonts
                 await document.fonts.ready;
 
                 const element = document.querySelector('main');
+
+                // A4 at 96 dpi = 794 × 1123 px (portrait)
+                // We capture at exactly this width so the content fills
+                // the full page without any scaling-down.
+                const A4_PX_WIDTH = 794;
+
                 const opt = {
-                    margin:      [8, 8, 8, 8],
+                    margin:      0,
                     filename:    'عبدالله_محجوب_سيرة_ذاتية.pdf',
                     image:       { type: 'jpeg', quality: 0.99 },
                     html2canvas: {
-                        scale:        3,
-                        useCORS:      true,
-                        allowTaint:   true,
-                        logging:      false,
-                        windowWidth:  900,
+                        scale:       2,
+                        useCORS:     true,
+                        allowTaint:  true,
+                        logging:     false,
+                        windowWidth: A4_PX_WIDTH,
                         onclone: async (clonedDoc) => {
-                            // Force fonts to load in the cloned document too
+                            // Make the main element fill exactly A4 width
+                            // with no outer margin so nothing is cropped.
+                            const clonedMain = clonedDoc.querySelector('main');
+                            clonedMain.style.maxWidth  = A4_PX_WIDTH + 'px';
+                            clonedMain.style.width     = A4_PX_WIDTH + 'px';
+                            clonedMain.style.margin    = '0';
+                            clonedMain.style.boxShadow = 'none';
+                            clonedMain.style.borderRadius = '0';
                             await clonedDoc.fonts.ready;
                         }
                     },
