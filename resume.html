@@ -402,7 +402,6 @@
         تحميل السيرة الذاتية كملف PDF
     </button>
 </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
         // Default resume data
         const defaultResumeData = {
@@ -558,49 +557,28 @@
             });
         });
 
-        // Download PDF — direct file download, A4 full-size, Arabic-safe.
+        // Download PDF — calls the server which uses real Chromium (Puppeteer)
+        // so Arabic text shaping and RTL layout are rendered perfectly.
         document.getElementById('downloadPdf').addEventListener('click', async () => {
             const btn = document.getElementById('downloadPdf');
             btn.disabled = true;
-            btn.innerHTML = '<span class="material-symbols-outlined">progress_activity</span> جارٍ التحضير...';
+            btn.innerHTML = '<span class="material-symbols-outlined">progress_activity</span> جارٍ إنشاء الملف...';
 
             try {
-                // Wait for IBM Plex Sans Arabic and all other fonts
-                await document.fonts.ready;
+                const response = await fetch('/generate-pdf');
+                if (!response.ok) throw new Error('فشل إنشاء الملف');
 
-                const element = document.querySelector('main');
-
-                // A4 at 96 dpi = 794 × 1123 px (portrait)
-                // We capture at exactly this width so the content fills
-                // the full page without any scaling-down.
-                const A4_PX_WIDTH = 794;
-
-                const opt = {
-                    margin:      0,
-                    filename:    'عبدالله_محجوب_سيرة_ذاتية.pdf',
-                    image:       { type: 'jpeg', quality: 0.99 },
-                    html2canvas: {
-                        scale:       2,
-                        useCORS:     true,
-                        allowTaint:  true,
-                        logging:     false,
-                        windowWidth: A4_PX_WIDTH,
-                        onclone: async (clonedDoc) => {
-                            // Make the main element fill exactly A4 width
-                            // with no outer margin so nothing is cropped.
-                            const clonedMain = clonedDoc.querySelector('main');
-                            clonedMain.style.maxWidth  = A4_PX_WIDTH + 'px';
-                            clonedMain.style.width     = A4_PX_WIDTH + 'px';
-                            clonedMain.style.margin    = '0';
-                            clonedMain.style.boxShadow = 'none';
-                            clonedMain.style.borderRadius = '0';
-                            await clonedDoc.fonts.ready;
-                        }
-                    },
-                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                };
-
-                await html2pdf().set(opt).from(element).save();
+                const blob = await response.blob();
+                const url  = URL.createObjectURL(blob);
+                const a    = document.createElement('a');
+                a.href     = url;
+                a.download = 'عبدالله_محجوب_سيرة_ذاتية.pdf';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+            } catch (err) {
+                alert('حدث خطأ أثناء إنشاء الملف: ' + err.message);
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = '<span class="material-symbols-outlined">download</span> تحميل السيرة الذاتية كملف PDF';
