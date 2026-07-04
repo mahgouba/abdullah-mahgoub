@@ -135,7 +135,7 @@
 </head>
 <body class="bg-background text-on-background min-h-screen">
 <!-- Top Navigation (Mobile Bottom Nav handled by responsiveness in layout) -->
-<header class="bg-surface sticky top-0 z-50 border-b border-outline-variant/30">
+<!-- <header class="bg-surface sticky top-0 z-50 border-b border-outline-variant/30">
 <div class="flex flex-row-reverse justify-between items-center w-full px-gutter py-inner-padding max-w-container-max mx-auto">
             <h1 class="font-name-display text-[24px] text-primary">عبدالله محجوب</h1>
             <div class="flex gap-4 items-center">
@@ -148,7 +148,7 @@
                 <span class="material-symbols-outlined text-primary cursor-pointer hover:opacity-70 transition-opacity" data-icon="location_on">location_on</span>
             </div>
         </div>
-</header>
+</header> -->
 <main class="max-w-container-max mx-auto bg-white my-8 resume-card overflow-hidden">
 <div class="grid grid-cols-1 md:grid-cols-12 min-h-[1100px]">
 <!-- Sidebar (Right side in RTL) -->
@@ -420,8 +420,11 @@
 
         // Function to render resume
         function renderResume() {
-            // Update name in header and sidebar
-            document.querySelector('header h1').textContent = resumeData.name.split(' ').slice(0, 2).join(' ');
+            // Update name in header (if present) and sidebar
+            const headerH1 = document.querySelector('header h1');
+            if (headerH1) {
+                headerH1.textContent = resumeData.name.split(' ').slice(0, 2).join(' ');
+            }
             document.querySelector('aside h2').textContent = resumeData.name;
             document.querySelector('aside p').textContent = resumeData.title;
             document.querySelector('aside img').src = resumeData.avatar;
