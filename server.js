@@ -35,8 +35,10 @@ app.get('/generate-pdf', async (req, res) => {
 
         const page = await browser.newPage();
 
-        // A4 at 96 dpi = 794 × 1123 px — set viewport to exactly this width
-        // so the resume fills the page with no body background showing on sides
+        // Emulate print media so the @media print CSS in resume.html takes effect
+        await page.emulateMediaType('print');
+
+        // A4 at 96 dpi = 794 × 1123 px
         await page.setViewport({ width: 794, height: 1123, deviceScaleFactor: 2 });
 
         // Load the resume page via the server itself
@@ -48,36 +50,25 @@ app.get('/generate-pdf', async (req, res) => {
         // Extra settle time for Arabic font shaping
         await new Promise(r => setTimeout(r, 800));
 
-        // Directly manipulate DOM to strip all outer spacing edge-to-edge
-        await page.evaluate(() => {
-            // Hide scrollbars so no reserved space appears on the right
-            const noScroll = document.createElement('style');
-            noScroll.textContent = `
-                ::-webkit-scrollbar { display: none; }
-                * { scrollbar-width: none; }
-            `;
-            document.head.appendChild(noScroll);
-
-            // Body: no margin, no padding, white background
-            document.documentElement.style.cssText +=
-                ';margin:0;padding:0;overflow:hidden;background:#fff';
-            document.body.style.cssText +=
-                ';margin:0;padding:0;overflow:hidden;background:#fff;min-height:unset';
-
-            // Main resume card: remove outer spacing and decoration
-            const main = document.querySelector('main');
-            if (main) {
-                main.style.cssText +=
-                    ';margin:0!important;max-width:794px!important;width:794px!important;' +
-                    'box-shadow:none!important;border-radius:0!important;border:none!important;';
-                // Also remove Tailwind spacing classes that add margin
-                main.classList.remove('my-8', 'mx-auto');
+        // Inject CSS overrides — zero @page margins is the critical fix
+        await page.addStyleTag({ content: `
+            @page { margin: 0 !important; size: A4; }
+            ::-webkit-scrollbar { display: none !important; }
+            html, body {
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #ffffff !important;
             }
-
-            // Hide the download button wrapper
-            const btn = document.getElementById('print-btn-wrapper');
-            if (btn) btn.style.display = 'none';
-        });
+            main {
+                margin: 0 !important;
+                max-width: 100% !important;
+                width: 100% !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                border: none !important;
+            }
+            #print-btn-wrapper { display: none !important; }
+        ` });
 
         // Generate A4 PDF
         const pdfBuffer = await page.pdf({
