@@ -402,6 +402,7 @@
         تحميل السيرة الذاتية كملف PDF
     </button>
 </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
         // Default resume data
         const defaultResumeData = {
@@ -557,10 +558,41 @@
             });
         });
 
-        // Download PDF — uses the browser's native print engine so Arabic
-        // text is rendered correctly (html2pdf/html2canvas breaks RTL shaping).
-        document.getElementById('downloadPdf').addEventListener('click', () => {
-            window.print();
+        // Download PDF — waits for all web fonts (Arabic) to fully load
+        // before html2canvas captures the page, preventing disconnected letters.
+        document.getElementById('downloadPdf').addEventListener('click', async () => {
+            const btn = document.getElementById('downloadPdf');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="material-symbols-outlined animate-spin">progress_activity</span> جارٍ التحضير...';
+
+            try {
+                // Wait for all fonts including IBM Plex Sans Arabic
+                await document.fonts.ready;
+
+                const element = document.querySelector('main');
+                const opt = {
+                    margin:      [8, 8, 8, 8],
+                    filename:    'عبدالله_محجوب_سيرة_ذاتية.pdf',
+                    image:       { type: 'jpeg', quality: 0.99 },
+                    html2canvas: {
+                        scale:        3,
+                        useCORS:      true,
+                        allowTaint:   true,
+                        logging:      false,
+                        windowWidth:  900,
+                        onclone: async (clonedDoc) => {
+                            // Force fonts to load in the cloned document too
+                            await clonedDoc.fonts.ready;
+                        }
+                    },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+
+                await html2pdf().set(opt).from(element).save();
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-outlined">download</span> تحميل السيرة الذاتية كملف PDF';
+            }
         });
     </script>
 
