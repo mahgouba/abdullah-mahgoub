@@ -48,32 +48,36 @@ app.get('/generate-pdf', async (req, res) => {
         // Extra settle time for Arabic font shaping
         await new Promise(r => setTimeout(r, 800));
 
-        // Strip all outer spacing so content fills the A4 page edge-to-edge.
-        // overflow:hidden on html removes the scrollbar reservation (~15px)
-        // that otherwise shows as a white gap on the right/top.
-        await page.addStyleTag({ content: `
-            html {
-                overflow: hidden !important;
-                scrollbar-width: none !important;
+        // Directly manipulate DOM to strip all outer spacing edge-to-edge
+        await page.evaluate(() => {
+            // Hide scrollbars so no reserved space appears on the right
+            const noScroll = document.createElement('style');
+            noScroll.textContent = `
+                ::-webkit-scrollbar { display: none; }
+                * { scrollbar-width: none; }
+            `;
+            document.head.appendChild(noScroll);
+
+            // Body: no margin, no padding, white background
+            document.documentElement.style.cssText +=
+                ';margin:0;padding:0;overflow:hidden;background:#fff';
+            document.body.style.cssText +=
+                ';margin:0;padding:0;overflow:hidden;background:#fff;min-height:unset';
+
+            // Main resume card: remove outer spacing and decoration
+            const main = document.querySelector('main');
+            if (main) {
+                main.style.cssText +=
+                    ';margin:0!important;max-width:794px!important;width:794px!important;' +
+                    'box-shadow:none!important;border-radius:0!important;border:none!important;';
+                // Also remove Tailwind spacing classes that add margin
+                main.classList.remove('my-8', 'mx-auto');
             }
-            html::-webkit-scrollbar { display: none !important; }
-            body {
-                margin: 0 !important;
-                padding: 0 !important;
-                background: #ffffff !important;
-                overflow: hidden !important;
-                min-height: unset !important;
-            }
-            main {
-                margin: 0 !important;
-                max-width: 100% !important;
-                width: 100% !important;
-                box-shadow: none !important;
-                border-radius: 0 !important;
-                border: none !important;
-            }
-            #print-btn-wrapper { display: none !important; }
-        ` });
+
+            // Hide the download button wrapper
+            const btn = document.getElementById('print-btn-wrapper');
+            if (btn) btn.style.display = 'none';
+        });
 
         // Generate A4 PDF
         const pdfBuffer = await page.pdf({
