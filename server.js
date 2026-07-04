@@ -35,6 +35,10 @@ app.get('/generate-pdf', async (req, res) => {
 
         const page = await browser.newPage();
 
+        // A4 at 96 dpi = 794 × 1123 px — set viewport to exactly this width
+        // so the resume fills the page with no body background showing on sides
+        await page.setViewport({ width: 794, height: 1123, deviceScaleFactor: 2 });
+
         // Load the resume page via the server itself
         const resumeUrl = `http://127.0.0.1:${PORT}/resume.html`;
         await page.goto(resumeUrl, { waitUntil: 'networkidle0', timeout: 30000 });
