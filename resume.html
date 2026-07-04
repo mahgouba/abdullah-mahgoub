@@ -462,6 +462,63 @@
             ]
         };
 
+        // ── Apply saved theme (colors) ─────────────────────────────────
+        (function applyTheme() {
+            let theme;
+            try { theme = JSON.parse(localStorage.getItem('themeData')); } catch(e) { return; }
+            if (!theme) return;
+
+            const primary   = theme.primary   || '#00236f';
+            const sidebarBg = theme.sidebarBg || '#f4f3fa';
+            const pageBg    = theme.pageBg    || '#faf8ff';
+
+            // Convert hex to rgb triplet for rgba() usage
+            function hex2rgb(hex) {
+                const h = hex.replace('#', '');
+                return [
+                    parseInt(h.substring(0,2), 16),
+                    parseInt(h.substring(2,4), 16),
+                    parseInt(h.substring(4,6), 16)
+                ].join(',');
+            }
+            const primaryRgb = hex2rgb(primary);
+
+            const styleEl = document.createElement('style');
+            styleEl.id = 'theme-override';
+            styleEl.textContent = `
+                /* Page background */
+                body, .bg-background { background-color: ${pageBg} !important; }
+
+                /* Primary color utilities */
+                .text-primary   { color: ${primary} !important; }
+                .bg-primary     { background-color: ${primary} !important; }
+                .border-primary { border-color: ${primary} !important; }
+
+                /* Primary with opacity — must come AFTER solid rule */
+                .border-primary\\/20,
+                .border-primary\\/30 { border-color: rgba(${primaryRgb},0.2) !important; }
+
+                /* Sidebar */
+                .bg-surface-container-low { background-color: ${sidebarBg} !important; }
+                .sidebar-border           { border-color: rgba(${primaryRgb},0.15) !important; }
+
+                /* Bullet points (hardcoded colour in CSS) */
+                .square-bullet li::before { color: ${primary} !important; }
+
+                /* Timeline dot (bg-primary inline class on absolute div) */
+                .bg-primary.rounded-sm { background-color: ${primary} !important; }
+
+                /* Download button */
+                #downloadPdf {
+                    background-color: ${primary} !important;
+                }
+                #downloadPdf:hover {
+                    filter: brightness(0.88);
+                }
+            `;
+            document.head.appendChild(styleEl);
+        })();
+
         // Load data from localStorage or use default
         let resumeData = JSON.parse(localStorage.getItem('resumeData')) || defaultResumeData;
 
