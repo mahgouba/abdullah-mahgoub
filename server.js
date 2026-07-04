@@ -48,12 +48,21 @@ app.get('/generate-pdf', async (req, res) => {
         // Extra settle time for Arabic font shaping
         await new Promise(r => setTimeout(r, 800));
 
-        // Strip all outer spacing so content fills the A4 page edge-to-edge
+        // Strip all outer spacing so content fills the A4 page edge-to-edge.
+        // overflow:hidden on html removes the scrollbar reservation (~15px)
+        // that otherwise shows as a white gap on the right/top.
         await page.addStyleTag({ content: `
-            html, body {
+            html {
+                overflow: hidden !important;
+                scrollbar-width: none !important;
+            }
+            html::-webkit-scrollbar { display: none !important; }
+            body {
                 margin: 0 !important;
                 padding: 0 !important;
                 background: #ffffff !important;
+                overflow: hidden !important;
+                min-height: unset !important;
             }
             main {
                 margin: 0 !important;
@@ -61,6 +70,7 @@ app.get('/generate-pdf', async (req, res) => {
                 width: 100% !important;
                 box-shadow: none !important;
                 border-radius: 0 !important;
+                border: none !important;
             }
             #print-btn-wrapper { display: none !important; }
         ` });
