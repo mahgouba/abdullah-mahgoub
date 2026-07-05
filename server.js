@@ -3,10 +3,17 @@ const puppeteer = require('puppeteer');
 const path = require('path');
 const { execSync } = require('child_process');
 
-// Resolve system Chromium (installed via Nix) at startup
+// Resolve system Chromium — works on Replit (Nix), Render/Ubuntu, and local
 let CHROMIUM_PATH;
 try {
-    CHROMIUM_PATH = execSync('which chromium').toString().trim();
+    // Try common binary names in order of preference
+    const candidates = ['chromium', 'chromium-browser', 'google-chrome', 'google-chrome-stable'];
+    for (const bin of candidates) {
+        try {
+            CHROMIUM_PATH = execSync(`which ${bin}`).toString().trim();
+            if (CHROMIUM_PATH) break;
+        } catch { /* try next */ }
+    }
 } catch {
     CHROMIUM_PATH = undefined; // fall back to puppeteer's bundled chrome
 }

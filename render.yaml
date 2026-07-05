@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: abdullah-resume
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: apt-get install -y chromium-browser 2>/dev/null || apt-get install -y chromium 2>/dev/null || true; npm install
+    startCommand: node server.js
+    envVars:
+      - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
+        value: "true"
+      - key: NODE_ENV
+        value: production
